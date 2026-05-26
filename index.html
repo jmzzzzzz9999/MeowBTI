@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MeowBTI 喵格测试</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="MeowBTI 首页">
+        <img class="brand-mark" src="./meowbti-logo-mark.svg" alt="" aria-hidden="true" />
+        <span class="brand-word"><span class="brand-cap">M</span><span class="brand-soft">eow</span><span>BTI</span></span>
+      </a>
+      <nav class="top-nav" aria-label="页面导航">
+        <a href="#test" data-start>开始测试</a>
+        <a href="#types" data-gallery>先看猫格</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section id="home" class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">25 种主猫格 · 5 大喵系阵营</p>
+          <h1>
+            <span>你的猫</span>
+            <span>是哪种 <span class="hero-brand-word"><span>M</span><span>eow</span><span>BTI</span></span>？</span>
+          </h1>
+          <p class="hero-text">
+            一份带点行为学依据、也带点胡说八道天赋的猫格测试。
+          </p>
+          <div class="hero-actions">
+            <a class="primary-button" href="#test" data-start>开始测试</a>
+            <a class="ghost-button" href="#types" data-gallery>先看猫格</a>
+          </div>
+        </div>
+        <div class="hero-art" aria-label="MeowBTI 猫格角色预览">
+          <img src="./PNG/V2/01_Diplomeow.png" alt="贴贴外交官" />
+          <img src="./PNG/V2/04_LurkMode.png" alt="暗中观察员" />
+          <img src="./PNG/V2/06_Unboxer.png" alt="开箱工程师" />
+          <img src="./PNG/V2/09_BossMeow.png" alt="家庭董事长" />
+          <img src="./PNG/V2/25_BlanketVIP.png" alt="被窝合法居民" />
+        </div>
+      </section>
+
+      <section id="test" class="section test-section hidden">
+        <div class="test-shell">
+          <aside class="test-intro">
+            <p class="eyebrow">Questionnaire</p>
+            <h2>20 道选择题</h2>
+            <p>
+              选最像你家猫长期稳定表现的一项。突然出现的乱尿、攻击、过度舔毛、食欲变化，优先当作健康或压力信号观察。
+            </p>
+            <div class="mini-stats">
+              <span><strong>25</strong>猫格</span>
+              <span><strong>5</strong>系列</span>
+              <span><strong>20</strong>题</span>
+            </div>
+          </aside>
+
+          <div class="quiz-card" aria-live="polite">
+            <div class="quiz-topline">
+              <span id="questionCounter">第 1 / 20 题</span>
+              <span id="answeredCounter">已答 0 题</span>
+            </div>
+            <div class="progress-track" aria-hidden="true">
+              <div id="progressBar" class="progress-bar"></div>
+            </div>
+            <h3 id="questionTitle"></h3>
+            <div id="optionList" class="option-list"></div>
+            <p id="quizMessage" class="quiz-message hidden"></p>
+            <div class="quiz-actions">
+              <button id="prevBtn" type="button" class="secondary-button">上一题</button>
+              <button id="submitBtn" type="button" class="primary-button hidden">查看结果</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="result" class="section result-section hidden">
+        <div class="result-card">
+          <div class="result-visual">
+            <img id="resultImage" src="" alt="" />
+          </div>
+          <div class="result-content">
+            <p id="resultFamily" class="eyebrow"></p>
+            <h2 id="resultName"></h2>
+            <p id="resultDesc"></p>
+            <div id="resultTags" class="tag-row"></div>
+            <div id="radarWrap" class="radar-wrap"></div>
+            <div id="secondaryResult" class="secondary-result"></div>
+            <div class="hero-actions">
+              <button id="openCardBtn" class="secondary-button" type="button">生成猫格卡片</button>
+              <button id="restartBtn" class="primary-button" type="button">重新测试</button>
+              <a class="ghost-button" href="#types" data-gallery>查看全部猫格</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="types" class="section hidden">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Type Gallery</p>
+            <h2>25 种主猫格</h2>
+          </div>
+          <a class="ghost-button compact-button" href="#top" data-home>返回主页</a>
+        </div>
+        <div id="typeGrid" class="type-family-grid"></div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>MeowBTI 是娱乐化猫格测试，不替代兽医或行为诊断。</span>
+    </footer>
+
+    <div id="cardModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="cardModalTitle">
+      <div class="modal-panel">
+        <button id="closeCardBtn" class="modal-close" type="button" aria-label="关闭">×</button>
+        <div class="modal-copy">
+          <p class="eyebrow">Share Card</p>
+          <h2 id="cardModalTitle">生成猫格卡片</h2>
+          <p>输入猫咪姓名后，会生成一张竖版分享卡片。</p>
+        </div>
+        <label class="field-label" for="catNameInput">猫咪姓名</label>
+        <div class="card-form">
+          <input id="catNameInput" class="text-input" type="text" maxlength="12" placeholder="比如：糯米" />
+          <button id="generateCardBtn" class="primary-button" type="button">生成卡片</button>
+        </div>
+        <div id="cardPreviewShell" class="card-preview-shell hidden">
+          <img id="cardPreview" class="card-preview" alt="猫格卡片预览" />
+          <a id="downloadCardLink" class="ghost-button" download="meowbti-card.png">保存图片</a>
+        </div>
+      </div>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
