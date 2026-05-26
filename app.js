@@ -41,8 +41,6 @@ const families = {
   },
 };
 
-const MEOWBTI_SHARE_URL = "https://meowbti-jmz.netlify.app/";
-
 const types = [
   { id: "Diplomeow", no: "01", name: "贴贴外交官", family: "affinity", img: "PNG/V2/01_Diplomeow.png", desc: "家里的柔软外交部。擅长用蹭腿、慢眨眼、陪睡和主动靠近来修复人类情绪。" },
   { id: "CtrlHuman", no: "02", name: "人类训练师", family: "affinity", img: "PNG/V2/02_CtrlHuman.png", desc: "表面上是你在养猫，实际上是它在调教人类。叫一声、盯一眼，人类就会行动。" },
@@ -283,6 +281,8 @@ const answers = Array(questions.length).fill(null);
 let advanceTimer = null;
 let currentResult = null;
 let cardPreviewObjectUrl = null;
+let currentCardBlob = null;
+let currentCardFileName = "meowbti-card.png";
 
 const $ = (selector) => document.querySelector(selector);
 const typeById = Object.fromEntries(types.map((type) => [type.id, type]));
@@ -290,9 +290,13 @@ const typeById = Object.fromEntries(types.map((type) => [type.id, type]));
 function renderTypes() {
   $("#typeGrid").innerHTML = Object.entries(families).map(([familyKey, family]) => {
     const cards = types.filter((type) => type.family === familyKey).map((type) => `
-        <article class="type-card" style="--family-color:${family.color}; --family-soft:${family.soft}">
+        <article class="type-card" tabindex="0" style="--family-color:${family.color}; --family-soft:${family.soft}">
           <div class="type-card-image">
             <img src="./${type.img}" alt="${type.name}" loading="lazy">
+          </div>
+          <div class="type-card-caption">
+            <p class="type-code">${type.id}</p>
+            <h3>${type.name}</h3>
           </div>
           <div class="type-card-body">
             <p class="type-code">${type.id}</p>
@@ -494,7 +498,9 @@ function renderResult() {
   $("#resultImage").src = `./${result.topType.img}`;
   $("#resultImage").alt = result.topType.name;
   $("#resultFamily").textContent = family.name;
+  $("#resultFamilyMobile").textContent = family.name;
   $("#resultName").textContent = `${result.topType.id} ${result.topType.name}`;
+  $("#resultNameMobile").innerHTML = `<span>${result.topType.id}</span><span>${result.topType.name}</span>`;
   $("#resultDesc").textContent = result.topType.desc;
   $("#resultTags").innerHTML = "";
 
@@ -527,176 +533,6 @@ async function loadImage(src) {
   });
 }
 
-function drawRoundRect(ctx, x, y, width, height, radius) {
-  const r = Math.min(radius, width / 2, height / 2);
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + width, y, x + width, y + height, r);
-  ctx.arcTo(x + width, y + height, x, y + height, r);
-  ctx.arcTo(x, y + height, x, y, r);
-  ctx.arcTo(x, y, x + width, y, r);
-  ctx.closePath();
-}
-
-function drawCoverImage(ctx, image, x, y, width, height, radius) {
-  const scale = Math.max(width / image.width, height / image.height);
-  const drawWidth = image.width * scale;
-  const drawHeight = image.height * scale;
-  const dx = x + (width - drawWidth) / 2;
-  const dy = y + (height - drawHeight) / 2;
-
-  ctx.save();
-  drawRoundRect(ctx, x, y, width, height, radius);
-  ctx.clip();
-  ctx.drawImage(image, dx, dy, drawWidth, drawHeight);
-  ctx.restore();
-}
-
-function wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 3) {
-  const chars = Array.from(text);
-  const lines = [];
-  let line = "";
-
-  chars.forEach((char) => {
-    const next = line + char;
-    if (ctx.measureText(next).width > maxWidth && line) {
-      lines.push(line);
-      line = char;
-    } else {
-      line = next;
-    }
-  });
-  if (line) lines.push(line);
-
-  lines.slice(0, maxLines).forEach((item, index) => {
-    const finalLine = index === maxLines - 1 && lines.length > maxLines ? `${item.slice(0, -1)}…` : item;
-    ctx.fillText(finalLine, x, y + index * lineHeight);
-  });
-}
-
-function drawWordmark(ctx, x, y) {
-  ctx.textBaseline = "alphabetic";
-  ctx.font = "700 42px Georgia, 'Times New Roman', serif";
-  ctx.fillStyle = "#2F3742";
-  ctx.fillText("M", x, y);
-  const mWidth = ctx.measureText("M").width;
-  ctx.font = "700 28px Georgia, 'Times New Roman', serif";
-  ctx.fillStyle = "#6F7B82";
-  ctx.fillText("eow", x + mWidth + 2, y - 3);
-  const eowWidth = ctx.measureText("eow").width;
-  ctx.font = "700 42px Georgia, 'Times New Roman', serif";
-  ctx.fillStyle = "#2F3742";
-  ctx.fillText("BTI", x + mWidth + eowWidth + 6, y);
-}
-
-function getCardData(catName) {
-  const family = families[currentResult.topFamily];
-  const type = currentResult.topType;
-  return {
-    catName: catName.trim() || "我家猫",
-    family,
-    type,
-    title: `${catName.trim() || "我家猫"}的猫格档案`,
-    certification: "经 MeowBTI 非严肃认证",
-    footerTitle: "MeowBTI 猫格测试",
-    footerNote: "娱乐结果，不替代兽医或行为诊断",
-    logoSrc: "./meowbti-logo-mark.svg",
-    typeImageSrc: `./${type.img}`,
-    qrSrc: "./assets/meowbti-qr.png",
-    shareUrl: MEOWBTI_SHARE_URL,
-  };
-}
-
-async function createShareCard(catName) {
-  if (!currentResult) return "";
-
-  const card = getCardData(catName);
-  const canvas = document.createElement("canvas");
-  canvas.width = 1080;
-  canvas.height = 1440;
-  const ctx = canvas.getContext("2d");
-
-  const [logo, catImage, qrImage] = await Promise.all([
-    loadImage(card.logoSrc),
-    loadImage(card.typeImageSrc),
-    loadImage(card.qrSrc),
-  ]);
-
-  ctx.fillStyle = "#FFFAF3";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  const bgGradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-  bgGradient.addColorStop(0, "rgba(240, 169, 119, 0.23)");
-  bgGradient.addColorStop(0.55, "rgba(255, 255, 255, 0)");
-  bgGradient.addColorStop(1, "rgba(90, 168, 143, 0.18)");
-  ctx.fillStyle = bgGradient;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  ctx.save();
-  ctx.globalAlpha = 0.58;
-  ctx.fillStyle = family.soft;
-  drawRoundRect(ctx, 74, 92, 932, 1256, 36);
-  ctx.fill();
-  ctx.restore();
-
-  ctx.drawImage(logo, 94, 96, 76, 76);
-  drawWordmark(ctx, 186, 150);
-
-  ctx.fillStyle = "#2F3742";
-  ctx.font = "900 76px 'Microsoft YaHei', 'PingFang SC', sans-serif";
-  ctx.fillText(card.title, 94, 270);
-
-  ctx.fillStyle = "#6F7B82";
-  ctx.font = "800 28px 'Microsoft YaHei', 'PingFang SC', sans-serif";
-  ctx.fillText(card.certification, 96, 318);
-
-  drawCoverImage(ctx, catImage, 170, 372, 740, 560, 18);
-
-  ctx.fillStyle = "#2F3742";
-  ctx.font = "900 64px Inter, 'Microsoft YaHei', sans-serif";
-  ctx.fillText(card.type.id, 96, 1038);
-  ctx.font = "900 54px 'Microsoft YaHei', 'PingFang SC', sans-serif";
-  ctx.fillText(card.type.name, 96, 1104);
-
-  ctx.fillStyle = card.family.color;
-  drawRoundRect(ctx, 96, 1140, 154, 44, 22);
-  ctx.fill();
-  ctx.fillStyle = "#FFFFFF";
-  ctx.font = "900 24px 'Microsoft YaHei', 'PingFang SC', sans-serif";
-  ctx.fillText(card.family.name, 122, 1170);
-
-  ctx.fillStyle = "#F4F1EB";
-  drawRoundRect(ctx, 270, 1140, 196, 44, 22);
-  ctx.fill();
-  ctx.fillStyle = "#6F7B82";
-  ctx.fillText(card.family.label, 296, 1170);
-
-  ctx.fillStyle = "#6F7B82";
-  ctx.font = "700 32px 'Microsoft YaHei', 'PingFang SC', sans-serif";
-  wrapText(ctx, card.type.desc, 96, 1244, 628, 48, 3);
-
-  ctx.fillStyle = "#FFFFFF";
-  drawRoundRect(ctx, 800, 1208, 156, 156, 14);
-  ctx.fill();
-  ctx.drawImage(qrImage, 812, 1220, 132, 132);
-  ctx.fillStyle = "#6F7B82";
-  ctx.font = "800 20px 'Microsoft YaHei', 'PingFang SC', sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText("扫码测猫格", 878, 1392);
-  ctx.textAlign = "left";
-
-  ctx.fillStyle = "rgba(37, 48, 56, 0.16)";
-  ctx.fillRect(96, 1324, 888, 2);
-  ctx.fillStyle = "#2F3742";
-  ctx.font = "900 26px Inter, 'Microsoft YaHei', sans-serif";
-  ctx.fillText(card.footerTitle, 96, 1376);
-  ctx.fillStyle = "#6F7B82";
-  ctx.font = "700 24px 'Microsoft YaHei', 'PingFang SC', sans-serif";
-  ctx.fillText(card.footerNote, 318, 1376);
-
-  return canvas.toDataURL("image/png");
-}
-
 function openCardModal() {
   if (!currentResult) return;
   releaseCardPreviewObjectUrl();
@@ -717,6 +553,7 @@ function releaseCardPreviewObjectUrl() {
   if (!cardPreviewObjectUrl) return;
   URL.revokeObjectURL(cardPreviewObjectUrl);
   cardPreviewObjectUrl = null;
+  currentCardBlob = null;
 }
 
 function getCardTemplateFileName(typeId) {
@@ -789,8 +626,48 @@ async function createShareCard(catName) {
 
   releaseCardPreviewObjectUrl();
   const blob = await canvasToBlob(canvas);
+  currentCardBlob = blob;
   cardPreviewObjectUrl = URL.createObjectURL(blob);
   return cardPreviewObjectUrl;
+}
+
+async function saveShareCardImage(event) {
+  if (event) event.preventDefault();
+  if (!currentCardBlob || !cardPreviewObjectUrl) {
+    window.alert("请先生成卡片，再保存图片。");
+    return;
+  }
+
+  const file = new File([currentCardBlob], currentCardFileName, { type: "image/png" });
+  if (navigator.canShare?.({ files: [file] }) && navigator.share) {
+    try {
+      await navigator.share({
+        files: [file],
+        title: "MeowBTI 猫格卡片",
+        text: "保存或分享这张 MeowBTI 猫格卡片",
+      });
+      return;
+    } catch (error) {
+      if (error?.name === "AbortError") return;
+      console.warn(error);
+    }
+  }
+
+  const isLikelyMobile = /Android|iPhone|iPad|iPod|Mobile|MicroMessenger/i.test(navigator.userAgent);
+  if (!isLikelyMobile) {
+    const link = document.createElement("a");
+    link.href = cardPreviewObjectUrl;
+    link.download = currentCardFileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    return;
+  }
+
+  const opened = window.open(cardPreviewObjectUrl, "_blank", "noopener,noreferrer");
+  if (!opened) {
+    window.alert("如果没有弹出保存面板，可以长按卡片预览图，选择保存到相册。");
+  }
 }
 
 document.addEventListener("click", (event) => {
@@ -851,6 +728,7 @@ $("#closeCardBtn").addEventListener("click", closeCardModal);
 $("#cardModal").addEventListener("click", (event) => {
   if (event.target === $("#cardModal")) closeCardModal();
 });
+$("#downloadCardLink").addEventListener("click", saveShareCardImage);
 $("#generateCardBtn").addEventListener("click", async () => {
   const button = $("#generateCardBtn");
   const catName = $("#catNameInput").value.trim() || "我家猫";
@@ -860,8 +738,10 @@ $("#generateCardBtn").addEventListener("click", async () => {
     const dataUrl = await createShareCard(catName);
     $("#cardPreview").src = dataUrl;
     $("#downloadCardLink").href = dataUrl;
+    currentCardFileName = `${catName}-MeowBTI猫格卡片.png`;
     $("#downloadCardLink").download = `${catName}-MeowBTI猫格卡片.png`;
     $("#cardPreviewShell").classList.remove("hidden");
+    $("#downloadCardLink").download = currentCardFileName;
   } catch (error) {
     console.error(error);
     window.alert("卡片生成失败，请确认页面是通过本地服务打开的，然后刷新后再试一次。");

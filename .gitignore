@@ -12,5 +12,6 @@ assets/cards/templates/
 assets/meowbti-logo-lockup-card.png
 scripts/compose_card_preview.py
 scripts/generate_card_templates.py
+mobile-preview.html
 .DS_Store
 Thumbs.db
