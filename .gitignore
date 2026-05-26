@@ -4,5 +4,13 @@ PNG/V1/
 meowbti-logo-*.svg
 !meowbti-logo-mark.svg
 !meowbti-logo-lockup.svg
+assets/cards/*.png
+!assets/cards/template-with-logo-qr.png
+!assets/cards/templates-fixed/
+!assets/cards/templates-fixed/*.png
+assets/cards/templates/
+assets/meowbti-logo-lockup-card.png
+scripts/compose_card_preview.py
+scripts/generate_card_templates.py
 .DS_Store
 Thumbs.db

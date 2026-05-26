@@ -282,6 +282,7 @@ let current = 0;
 const answers = Array(questions.length).fill(null);
 let advanceTimer = null;
 let currentResult = null;
+let cardPreviewObjectUrl = null;
 
 const $ = (selector) => document.querySelector(selector);
 const typeById = Object.fromEntries(types.map((type) => [type.id, type]));
@@ -698,6 +699,7 @@ async function createShareCard(catName) {
 
 function openCardModal() {
   if (!currentResult) return;
+  releaseCardPreviewObjectUrl();
   $("#catNameInput").value = "";
   $("#cardPreviewShell").classList.add("hidden");
   $("#cardPreview").removeAttribute("src");
@@ -707,7 +709,88 @@ function openCardModal() {
 }
 
 function closeCardModal() {
+  releaseCardPreviewObjectUrl();
   $("#cardModal").classList.add("hidden");
+}
+
+function releaseCardPreviewObjectUrl() {
+  if (!cardPreviewObjectUrl) return;
+  URL.revokeObjectURL(cardPreviewObjectUrl);
+  cardPreviewObjectUrl = null;
+}
+
+function getCardTemplateFileName(typeId) {
+  return typeId.replace(/[^A-Za-z0-9]/g, "");
+}
+
+function fitCanvasFont(ctx, text, maxWidth, maxSize, minSize) {
+  for (let size = maxSize; size >= minSize; size -= 1) {
+    ctx.font = `900 ${size}px 'Microsoft YaHei', 'PingFang SC', sans-serif`;
+    if (ctx.measureText(text).width <= maxWidth) return size;
+  }
+  return minSize;
+}
+
+function drawShareCardTitle(ctx, catName) {
+  const name = catName.trim() || "我家猫";
+  const suffix = "的猫格档案";
+  const fullTitle = `${name}${suffix}`;
+  const fontSize = fitCanvasFont(ctx, fullTitle, 780, 66, 46);
+
+  ctx.textBaseline = "alphabetic";
+  ctx.font = `900 ${fontSize}px 'Microsoft YaHei', 'PingFang SC', sans-serif`;
+
+  const nameWidth = ctx.measureText(name).width;
+  const suffixWidth = ctx.measureText(suffix).width;
+  const startX = (1024 - nameWidth - suffixWidth) / 2;
+  const baselineY = 285;
+
+  ctx.fillStyle = "#E88967";
+  ctx.fillText(name, startX, baselineY);
+  ctx.fillStyle = "#253038";
+  ctx.fillText(suffix, startX + nameWidth, baselineY);
+}
+
+function canvasToBlob(canvas) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) {
+        resolve(blob);
+      } else {
+        reject(new Error("Canvas export failed"));
+      }
+    }, "image/png", 0.95);
+  });
+}
+
+function getCardData(catName) {
+  const type = currentResult.topType;
+  const templateFileName = getCardTemplateFileName(type.id);
+
+  return {
+    catName: catName.trim() || "我家猫",
+    type,
+    templateSrc: `./assets/cards/templates-fixed/${templateFileName}.png`,
+  };
+}
+
+async function createShareCard(catName) {
+  if (!currentResult) return "";
+
+  const card = getCardData(catName);
+  const template = await loadImage(card.templateSrc);
+  const canvas = document.createElement("canvas");
+  canvas.width = template.naturalWidth || template.width || 1024;
+  canvas.height = template.naturalHeight || template.height || 1536;
+
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(template, 0, 0, canvas.width, canvas.height);
+  drawShareCardTitle(ctx, card.catName);
+
+  releaseCardPreviewObjectUrl();
+  const blob = await canvasToBlob(canvas);
+  cardPreviewObjectUrl = URL.createObjectURL(blob);
+  return cardPreviewObjectUrl;
 }
 
 document.addEventListener("click", (event) => {
