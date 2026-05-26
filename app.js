@@ -41,6 +41,8 @@ const families = {
   },
 };
 
+const MEOWBTI_SHARE_URL = "https://meowbti-jmz.netlify.app/";
+
 const types = [
   { id: "Diplomeow", no: "01", name: "贴贴外交官", family: "affinity", img: "PNG/V2/01_Diplomeow.png", desc: "家里的柔软外交部。擅长用蹭腿、慢眨眼、陪睡和主动靠近来修复人类情绪。" },
   { id: "CtrlHuman", no: "02", name: "人类训练师", family: "affinity", img: "PNG/V2/02_CtrlHuman.png", desc: "表面上是你在养猫，实际上是它在调教人类。叫一声、盯一眼，人类就会行动。" },
@@ -599,6 +601,8 @@ function getCardData(catName) {
     footerNote: "娱乐结果，不替代兽医或行为诊断",
     logoSrc: "./meowbti-logo-mark.svg",
     typeImageSrc: `./${type.img}`,
+    qrSrc: "./assets/meowbti-qr.png",
+    shareUrl: MEOWBTI_SHARE_URL,
   };
 }
 
@@ -611,9 +615,10 @@ async function createShareCard(catName) {
   canvas.height = 1440;
   const ctx = canvas.getContext("2d");
 
-  const [logo, catImage] = await Promise.all([
+  const [logo, catImage, qrImage] = await Promise.all([
     loadImage(card.logoSrc),
     loadImage(card.typeImageSrc),
+    loadImage(card.qrSrc),
   ]);
 
   ctx.fillStyle = "#FFFAF3";
@@ -672,18 +677,11 @@ async function createShareCard(catName) {
   ctx.fillStyle = "#FFFFFF";
   drawRoundRect(ctx, 800, 1208, 156, 156, 14);
   ctx.fill();
-  ctx.strokeStyle = "rgba(37, 48, 56, 0.16)";
-  ctx.lineWidth = 3;
-  drawRoundRect(ctx, 800, 1208, 156, 156, 14);
-  ctx.stroke();
-  ctx.drawImage(logo, 836, 1232, 84, 84);
-  ctx.fillStyle = "#6F7B82";
-  ctx.font = "900 22px 'Microsoft YaHei', 'PingFang SC', sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText("二维码预留位", 878, 1338);
+  ctx.drawImage(qrImage, 812, 1220, 132, 132);
   ctx.fillStyle = "#6F7B82";
   ctx.font = "800 20px 'Microsoft YaHei', 'PingFang SC', sans-serif";
-  ctx.fillText("上线后扫码测猫格", 878, 1392);
+  ctx.textAlign = "center";
+  ctx.fillText("扫码测猫格", 878, 1392);
   ctx.textAlign = "left";
 
   ctx.fillStyle = "rgba(37, 48, 56, 0.16)";
