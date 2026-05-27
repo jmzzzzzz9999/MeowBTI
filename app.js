@@ -295,8 +295,7 @@ function renderTypes() {
             <img src="./${type.img}" alt="${type.name}" loading="lazy">
           </div>
           <div class="type-card-caption">
-            <p class="type-code">${type.id}</p>
-            <h3>${type.name}</h3>
+            <h3><span class="type-code">${type.id}</span><span>${type.name}</span></h3>
           </div>
           <div class="type-card-body">
             <p class="type-code">${type.id}</p>
